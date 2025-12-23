@@ -1,19 +1,24 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Index() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <View style={styles.container}>
       <WebView
         source={{ uri: 'https://repostme.com/login' }}
         style={styles.webview}
+        backgroundColor="#FFFFFF"
+        contentInsetAdjustmentBehavior="automatic"
         javaScriptEnabled
         domStorageEnabled
         sharedCookiesEnabled
       />
-    </SafeAreaView>
+      <View style={[styles.bottomSafeArea, { height: insets.bottom }]} />
+    </View>
   );
 }
 
@@ -24,5 +29,8 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+  },
+  bottomSafeArea: {
+    backgroundColor: '#FFFFFF',
   },
 });
