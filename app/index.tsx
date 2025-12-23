@@ -12,9 +12,13 @@ export default function Index() {
 
   const checkOnboarding = async () => {
     try {
-      // Réinitialiser l'onboarding pour le test
-      await AsyncStorage.removeItem('onboarding_completed');
-      router.replace('/onboarding');
+      const completed = await AsyncStorage.getItem('onboarding_completed');
+
+      if (completed === 'true') {
+        router.replace('/webview');
+      } else {
+        router.replace('/onboarding');
+      }
     } catch (error) {
       console.error('Erreur lors de la vérification:', error);
       router.replace('/onboarding');
