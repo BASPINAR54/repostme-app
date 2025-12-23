@@ -1,18 +1,21 @@
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 export default function Index() {
   return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#10b981" />
-    </View>
+    <WebView
+      source={{ uri: 'https://repostme.com/login' }}
+      style={styles.webview}
+      javaScriptEnabled
+      domStorageEnabled
+      sharedCookiesEnabled
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  webview: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
   },
 });
