@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { ShoppingBag, LogOut, Bell } from 'lucide-react-native';
+import { ShoppingBag, LogOut, Bell, BellRing } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
-import { scheduleLocalNotification } from '../lib/pushNotifications';
+import { scheduleLocalNotification, registerForPushNotificationsAsync, savePushToken } from '../lib/pushNotifications';
 import { NotificationCard } from '../components/NotificationCard';
 import { EmptyState } from '../components/EmptyState';
 import { PlatformNotification } from '../types';
@@ -141,6 +141,35 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleRequestPermissions = async () => {
+    try {
+      console.log('=== DÉBUT DEMANDE PERMISSIONS ===');
+      const pushToken = await registerForPushNotificationsAsync();
+      console.log('Token reçu:', pushToken);
+
+      if (pushToken && user?.id) {
+        const saved = await savePushToken(user.id, pushToken);
+        console.log('Token enregistré:', saved);
+
+        Alert.alert(
+          'Permissions accordées!',
+          `Token enregistré: ${pushToken.substring(0, 30)}...`,
+          [{ text: 'OK' }]
+        );
+      } else {
+        console.log('Pas de token ou pas d\'utilisateur');
+        Alert.alert(
+          'Erreur',
+          'Impossible d\'obtenir le token. Vérifiez les permissions dans Réglages → Notifications.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('Erreur permissions:', error);
+      Alert.alert('Erreur', error.message || 'Erreur inconnue', [{ text: 'OK' }]);
+    }
+  };
+
   const handleTestNotification = async () => {
     if (!user) return;
 
@@ -187,6 +216,12 @@ export default function NotificationsScreen() {
             <Text style={styles.badgeText}>{unreadCount}</Text>
           </View>
         )}
+        <TouchableOpacity
+          style={styles.testButton}
+          onPress={handleRequestPermissions}
+        >
+          <BellRing size={20} color="#ef4444" />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.testButton}
           onPress={handleTestNotification}

@@ -16,6 +16,10 @@ export async function registerForPushNotificationsAsync(): Promise<
 > {
   let token = null;
 
+  console.log('=== Début registerForPushNotificationsAsync ===');
+  console.log('Platform.OS:', Platform.OS);
+  console.log('Device.isDevice:', Device.isDevice);
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
@@ -25,24 +29,32 @@ export async function registerForPushNotificationsAsync(): Promise<
     });
   }
 
-  if (Device.isDevice) {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+  // TOUJOURS demander les permissions, même si Device.isDevice est false
+  console.log('Vérification des permissions...');
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  console.log('Status actuel:', existingStatus);
+  let finalStatus = existingStatus;
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
+  if (existingStatus !== 'granted') {
+    console.log('Demande de permissions...');
+    const { status } = await Notifications.requestPermissionsAsync();
+    console.log('Permissions accordées:', status);
+    finalStatus = status;
+  }
 
-    if (finalStatus !== 'granted') {
-      console.log('Permission for push notifications denied');
-      return null;
-    }
+  if (finalStatus !== 'granted') {
+    console.log('Permission for push notifications denied');
+    return null;
+  }
 
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-  } else {
-    console.log('Must use physical device for Push Notifications');
+  console.log('Récupération du token...');
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    token = tokenData.data;
+    console.log('Token obtenu:', token);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du token:', error);
+    return null;
   }
 
   return token;
