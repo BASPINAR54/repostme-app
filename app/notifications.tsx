@@ -171,21 +171,49 @@ export default function NotificationsScreen() {
   };
 
   const handleTestNotification = async () => {
-    if (!user) return;
+    if (!user) {
+      Alert.alert('Erreur', 'Vous devez être connecté', [{ text: 'OK' }]);
+      return;
+    }
 
     try {
+      console.log('=== DÉBUT TEST NOTIFICATION ===');
+      console.log('User ID:', user.id);
+
+      // Vérifier d'abord si l'utilisateur a des tokens
+      const { data: tokens, error: tokenError } = await supabase
+        .from('user_push_tokens')
+        .select('*')
+        .eq('user_id', user.id);
+
+      console.log('Tokens trouvés:', tokens);
+      console.log('Erreur tokens:', tokenError);
+
+      if (!tokens || tokens.length === 0) {
+        Alert.alert(
+          'Aucun token trouvé',
+          'Vous devez d\'abord autoriser les notifications. Cliquez sur l\'icône de cloche rouge pour activer les permissions.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('Appel de la fonction RPC...');
       const { data, error } = await supabase.rpc('test_send_notification', {
         p_user_id: user.id,
         p_title: 'Test de notification',
         p_message: 'Ceci est une notification de test! Si vous la recevez, tout fonctionne correctement.',
       });
 
+      console.log('Résultat RPC:', data);
+      console.log('Erreur RPC:', error);
+
       if (error) throw error;
 
       if (data.success) {
         Alert.alert(
           'Notification envoyée!',
-          'Vérifiez votre appareil. La notification devrait arriver dans quelques secondes.',
+          `Vérifiez votre appareil. ${tokens.length} appareil(s) notifié(s).\n\nLa notification devrait arriver dans quelques secondes.`,
           [{ text: 'OK' }]
         );
       } else {
@@ -193,11 +221,15 @@ export default function NotificationsScreen() {
           { text: 'OK' },
         ]);
       }
-    } catch (error) {
+
+      console.log('=== FIN TEST NOTIFICATION ===');
+    } catch (error: any) {
       console.error('Error sending test notification:', error);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'envoi de la notification', [
-        { text: 'OK' },
-      ]);
+      Alert.alert(
+        'Erreur',
+        `Une erreur est survenue:\n${error.message || 'Erreur inconnue'}`,
+        [{ text: 'OK' }]
+      );
     }
   };
 
