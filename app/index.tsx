@@ -1,11 +1,24 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Alert } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExternalLink, Bell } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import { router } from 'expo-router';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Index() {
   const insets = useSafeAreaInsets();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.replace('/notifications');
+      } else {
+        router.replace('/login');
+      }
+    }
+  }, [user, loading]);
 
   const handleTestNotification = async () => {
     try {
@@ -32,37 +45,18 @@ export default function Index() {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <ExternalLink size={64} color="#10b981" />
-        <Text style={styles.title}>RepostMe</Text>
-        <Text style={styles.message}>
-          Redirection vers la page de connexion...
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.button, styles.testButton]}
-          onPress={handleTestNotification}
-        >
-          <Bell size={20} color="#ffffff" style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Tester Notification</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {
-            if (Platform.OS === 'web') {
-              window.location.href = 'https://repostme.com/login';
-            }
-          }}
-        >
-          <Text style={styles.buttonText}>Ouvrir RepostMe</Text>
-        </TouchableOpacity>
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <ActivityIndicator size="large" color="#10b981" />
+          <Text style={[styles.message, { marginTop: 16 }]}>Chargement...</Text>
+        </View>
       </View>
-      <View style={[styles.bottomSafeArea, { height: insets.bottom }]} />
-    </View>
-  );
+    );
+  }
+
+  return null;
 }
 
 const styles = StyleSheet.create({
