@@ -12,7 +12,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/notifications');
+        const url = 'https://repostme.com/buy?tab=catalogue';
+        router.replace(`/webview?url=${encodeURIComponent(url)}`);
       } else {
         router.replace('/login');
       }
