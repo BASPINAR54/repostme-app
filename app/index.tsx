@@ -1,10 +1,36 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ExternalLink } from 'lucide-react-native';
+import { ExternalLink, Bell } from 'lucide-react-native';
+import { supabase } from '../lib/supabase';
 
 export default function Index() {
   const insets = useSafeAreaInsets();
+
+  const handleTestNotification = async () => {
+    try {
+      const { data, error } = await supabase.rpc('test_push_notification', {
+        p_title: 'Test Notification',
+        p_body: 'Ceci est une notification de test!',
+        p_data: { test: true }
+      });
+
+      if (error) throw error;
+
+      if (Platform.OS === 'web') {
+        alert('Notification envoyée! Vérifiez votre appareil mobile.');
+      } else {
+        Alert.alert('Succès', 'Notification envoyée!');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      if (Platform.OS === 'web') {
+        alert('Erreur lors de l\'envoi: ' + (error as Error).message);
+      } else {
+        Alert.alert('Erreur', (error as Error).message);
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -14,6 +40,15 @@ export default function Index() {
         <Text style={styles.message}>
           Redirection vers la page de connexion...
         </Text>
+
+        <TouchableOpacity
+          style={[styles.button, styles.testButton]}
+          onPress={handleTestNotification}
+        >
+          <Bell size={20} color="#ffffff" style={styles.buttonIcon} />
+          <Text style={styles.buttonText}>Tester Notification</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
@@ -61,6 +96,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  testButton: {
+    backgroundColor: '#3b82f6',
+    marginBottom: 16,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   buttonText: {
     color: '#ffffff',
