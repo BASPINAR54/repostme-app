@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { ShoppingBag, LogOut } from 'lucide-react-native';
+import { ShoppingBag, LogOut, Bell } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { scheduleLocalNotification } from '../lib/pushNotifications';
@@ -140,6 +141,37 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleTestNotification = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.rpc('test_send_notification', {
+        p_user_id: user.id,
+        p_title: 'Test de notification',
+        p_message: 'Ceci est une notification de test! Si vous la recevez, tout fonctionne correctement.',
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        Alert.alert(
+          'Notification envoyée!',
+          'Vérifiez votre appareil. La notification devrait arriver dans quelques secondes.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Erreur', data.error || 'Impossible d\'envoyer la notification', [
+          { text: 'OK' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'envoi de la notification', [
+        { text: 'OK' },
+      ]);
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
@@ -155,6 +187,12 @@ export default function NotificationsScreen() {
             <Text style={styles.badgeText}>{unreadCount}</Text>
           </View>
         )}
+        <TouchableOpacity
+          style={styles.testButton}
+          onPress={handleTestNotification}
+        >
+          <Bell size={20} color="#10b981" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={20} color="#6b7280" />
         </TouchableOpacity>
@@ -256,6 +294,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  testButton: {
+    padding: 8,
+    marginRight: 4,
   },
   logoutButton: {
     padding: 8,

@@ -50,18 +50,26 @@ export async function registerForPushNotificationsAsync(): Promise<
 
 export async function savePushToken(userId: string, pushToken: string) {
   try {
-    const { error } = await supabase.from('user_push_tokens').upsert({
-      user_id: userId,
-      push_token: pushToken,
-      device_type: Platform.OS,
-      updated_at: new Date().toISOString(),
-    });
+    const { error } = await supabase
+      .from('user_push_tokens')
+      .upsert(
+        {
+          user_id: userId,
+          push_token: pushToken,
+          device_type: Platform.OS,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,push_token',
+        }
+      );
 
     if (error) {
       console.error('Error saving push token:', error);
       return false;
     }
 
+    console.log('Push token saved successfully for user:', userId);
     return true;
   } catch (error) {
     console.error('Error saving push token:', error);
