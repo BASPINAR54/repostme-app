@@ -13,6 +13,7 @@ import {
 import { Mail, Lock, Eye, EyeOff, ShoppingBag } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { router } from 'expo-router';
+import { registerForPushNotificationsAsync, savePushToken } from '../lib/pushNotifications';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -33,7 +34,24 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      const { user } = await signIn(email, password);
+
+      console.log('=== LOGIN RÉUSSI - DEMANDE DE PERMISSIONS ===');
+
+      // Demander les permissions push immédiatement après la connexion
+      try {
+        const pushToken = await registerForPushNotificationsAsync();
+        console.log('Push token obtenu:', pushToken);
+
+        if (pushToken && user?.id) {
+          await savePushToken(user.id, pushToken);
+          console.log('Token enregistré avec succès');
+        }
+      } catch (permError) {
+        console.error('Erreur permissions (non bloquant):', permError);
+        // Ne pas bloquer la connexion si les permissions échouent
+      }
+
       router.replace('/notifications');
     } catch (err: any) {
       console.error('Login error:', err);
