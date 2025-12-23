@@ -37,13 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="notifications" />
-        <Stack.Screen
-          name="webview"
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
+        <Stack.Screen name="webview" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />
