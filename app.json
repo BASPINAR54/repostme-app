@@ -8,9 +8,9 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
 
-    // 🔴 FIX BUILD iOS
+    // ✅ STABLE POUR iOS
     "jsEngine": "jsc",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
 
     "ios": {
       "supportsTablet": true
