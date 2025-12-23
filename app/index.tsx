@@ -7,7 +7,12 @@ export default function Index() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    checkOnboarding();
+    // Petit délai pour s'assurer que le Root Layout est monté
+    const timer = setTimeout(() => {
+      checkOnboarding();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const checkOnboarding = async () => {
