@@ -115,21 +115,19 @@ export default function NotificationsScreen() {
   };
 
   const getDefaultUrl = (type: string): string => {
-    const baseUrl = 'https://repostme.com/sell';
-
     switch (type) {
       case 'proposal_received':
-        return `${baseUrl}?tab=offres`;
+        return 'https://repostme.com/sell?tab=offres';
       case 'mission_accepted':
-        return `${baseUrl}?tab=missions`;
+        return 'https://repostme.com/sell?tab=missions';
       case 'mission_deadline_24h':
-        return `${baseUrl}?tab=missions&status=active`;
+        return 'https://repostme.com/sell?tab=missions&status=active';
       case 'buyer_contested_order':
-        return `${baseUrl}?tab=missions&status=contested`;
+        return 'https://repostme.com/sell?tab=missions&status=contested';
       case 'mission_completed':
-        return `${baseUrl}?tab=mes-comptes`;
+        return 'https://repostme.com/sell?tab=mes-comptes';
       default:
-        return baseUrl;
+        return 'https://repostme.com/buy?tab=catalogue';
     }
   };
 
