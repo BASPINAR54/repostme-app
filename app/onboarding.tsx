@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Bell, ShoppingBag, Truck, CheckCircle } from 'lucide-react-native';
-import { registerForPushNotificationsAsync } from '../lib/pushNotifications';
+import { registerForPushNotificationsAsync, scheduleLocalNotification } from '../lib/pushNotifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -55,6 +55,24 @@ export default function OnboardingScreen() {
   const handleSkip = async () => {
     await AsyncStorage.setItem('onboarding_completed', 'true');
     router.replace('/webview');
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      setLoading(true);
+      const token = await registerForPushNotificationsAsync();
+
+      if (token) {
+        await scheduleLocalNotification(
+          'Test de notification',
+          'Les notifications fonctionnent correctement!'
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors du test de notification:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEnableNotifications = async () => {
@@ -127,7 +145,28 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {currentSlide < slides.length - 1 ? (
+        {currentSlide === 0 ? (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+              <Text style={styles.skipButtonText}>Passer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+              <Text style={styles.nextButtonText}>Suivant</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={handleTestNotification}
+              disabled={loading}
+            >
+              <Bell size={18} color="#10b981" style={styles.buttonIcon} />
+              <Text style={styles.testButtonText}>
+                {loading ? 'Test...' : 'Tester'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : currentSlide < slides.length - 1 ? (
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
               <Text style={styles.skipButtonText}>Passer</Text>
@@ -263,6 +302,22 @@ const styles = StyleSheet.create({
   enableButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  testButton: {
+    flex: 0.6,
+    flexDirection: 'row',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  testButtonText: {
+    color: '#10b981',
+    fontSize: 14,
     fontWeight: '600',
   },
 });
