@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import {
-  registerForPushNotificationsAsync,
-  savePushToken,
-} from '../lib/pushNotifications';
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,17 +17,8 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          const pushToken = await registerForPushNotificationsAsync();
-          if (pushToken) {
-            await savePushToken(session.user.id, pushToken);
-          }
-        }
-      })();
+      setSession(session);
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
