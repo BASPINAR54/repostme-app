@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
-  const { user, loading: authLoading } = useAuth();
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
@@ -31,16 +29,13 @@ export default function Index() {
   };
 
   useEffect(() => {
-    if (!checkingOnboarding && !authLoading) {
-      if (user) {
-        router.replace('/notifications');
-      } else {
-        router.replace('/login');
-      }
+    if (!checkingOnboarding) {
+      // Aller directement sur la WebView après l'onboarding
+      router.replace('/webview');
     }
-  }, [user, authLoading, checkingOnboarding]);
+  }, [checkingOnboarding]);
 
-  if (checkingOnboarding || authLoading) {
+  if (checkingOnboarding) {
     return (
       <View style={styles.container}>
         <View style={styles.content}>

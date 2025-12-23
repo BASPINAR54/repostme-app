@@ -1,103 +1,144 @@
-import React from 'react';
-import { StyleSheet, Platform, View, Text, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { ExternalLink, ArrowLeft } from 'lucide-react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { StyleSheet, Platform, View, ActivityIndicator } from 'react-native';
+import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { savePushToken } from '../lib/pushNotifications';
 
 export default function WebViewScreen() {
-  const { url } = useLocalSearchParams<{ url: string }>();
-  const decodedUrl = url ? decodeURIComponent(url) : 'https://repostme.com/buy?tab=catalogue';
+  const webViewRef = useRef<WebView>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAndSendPushToken();
+  }, []);
+
+  const checkAndSendPushToken = async () => {
+    const pendingToken = await AsyncStorage.getItem('pending_push_token');
+    if (pendingToken) {
+      console.log('Push token en attente:', pendingToken);
+    }
+  };
+
+  const handleMessage = async (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      console.log('Message reçu de la WebView:', data);
+
+      if (data.type === 'USER_LOGGED_IN' && data.userId) {
+        console.log('Utilisateur connecté, ID:', data.userId);
+
+        // Récupérer le push token en attente
+        const pendingToken = await AsyncStorage.getItem('pending_push_token');
+
+        if (pendingToken) {
+          console.log('Enregistrement du push token pour l\'utilisateur...');
+          const success = await savePushToken(data.userId, pendingToken);
+
+          if (success) {
+            console.log('Push token enregistré avec succès');
+            // Supprimer le token en attente
+            await AsyncStorage.removeItem('pending_push_token');
+
+            // Notifier la WebView
+            webViewRef.current?.postMessage(
+              JSON.stringify({
+                type: 'PUSH_TOKEN_REGISTERED',
+                success: true,
+              })
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du traitement du message:', error);
+    }
+  };
+
+  const injectedJavaScript = `
+    (function() {
+      // Fonction pour envoyer des messages à React Native
+      window.sendToNative = function(type, data) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type, ...data }));
+      };
+
+      // Écouter les événements de connexion
+      // Votre site web devra appeler cette fonction après connexion :
+      // window.sendToNative('USER_LOGGED_IN', { userId: 'xxx' });
+
+      console.log('Bridge React Native installé');
+    })();
+    true;
+  `;
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <iframe
+          src="https://repostme.com"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.webContainer}>
-      <View style={styles.webHeader}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#1f2937" />
-        </TouchableOpacity>
-        <Text style={styles.webTitle}>RepostMe</Text>
-      </View>
-
-      <View style={styles.webContent}>
-        <ExternalLink size={48} color="#10b981" />
-        <Text style={styles.webMessage}>
-          Cette page s'ouvre mieux dans le navigateur
-        </Text>
-        <TouchableOpacity
-          style={styles.openButton}
-          onPress={() => {
-            if (Platform.OS === 'web') {
-              window.open(decodedUrl, '_blank');
-            }
-          }}
-        >
-          <Text style={styles.openButtonText}>Ouvrir dans un nouvel onglet</Text>
-          <ExternalLink size={16} color="#ffffff" style={{ marginLeft: 8 }} />
-        </TouchableOpacity>
-
-        <Text style={styles.urlText}>URL: {decodedUrl}</Text>
-      </View>
+    <View style={styles.container}>
+      <WebView
+        ref={webViewRef}
+        source={{ uri: 'https://repostme.com' }}
+        style={styles.webview}
+        onMessage={handleMessage}
+        injectedJavaScript={injectedJavaScript}
+        onLoadStart={() => setLoading(true)}
+        onLoadEnd={() => setLoading(false)}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        renderLoading={() => (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#10b981" />
+          </View>
+        )}
+      />
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#10b981" />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   webview: {
     flex: 1,
   },
-  webContainer: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  webHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 12,
-  },
-  webTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  webContent: {
-    flex: 1,
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    backgroundColor: '#ffffff',
   },
-  webMessage: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#1f2937',
-    marginTop: 24,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  openButton: {
-    flexDirection: 'row',
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#10b981',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 8,
-    marginBottom: 24,
-  },
-  openButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  urlText: {
-    fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
-    maxWidth: 400,
+    backgroundColor: '#ffffff',
   },
 });
