@@ -1,51 +1,46 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ExternalLink, Bell } from 'lucide-react-native';
-import { supabase } from '../lib/supabase';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
-  const insets = useSafeAreaInsets();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
+    checkOnboardingStatus();
+  }, []);
+
+  const checkOnboardingStatus = async () => {
+    try {
+      const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+
+      // Si l'onboarding n'a jamais été complété, aller sur l'écran d'onboarding
+      if (!onboardingCompleted) {
+        router.replace('/onboarding');
+        return;
+      }
+
+      // Sinon, rediriger selon l'état de connexion
+      setCheckingOnboarding(false);
+    } catch (error) {
+      console.error('Erreur lors de la vérification de l\'onboarding:', error);
+      setCheckingOnboarding(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!checkingOnboarding && !authLoading) {
       if (user) {
         router.replace('/notifications');
       } else {
         router.replace('/login');
       }
     }
-  }, [user, loading]);
+  }, [user, authLoading, checkingOnboarding]);
 
-  const handleTestNotification = async () => {
-    try {
-      const { data, error } = await supabase.rpc('test_push_notification', {
-        p_title: 'Test Notification',
-        p_body: 'Ceci est une notification de test!',
-        p_data: { test: true }
-      });
-
-      if (error) throw error;
-
-      if (Platform.OS === 'web') {
-        alert('Notification envoyée! Vérifiez votre appareil mobile.');
-      } else {
-        Alert.alert('Succès', 'Notification envoyée!');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      if (Platform.OS === 'web') {
-        alert('Erreur lors de l\'envoi: ' + (error as Error).message);
-      } else {
-        Alert.alert('Erreur', (error as Error).message);
-      }
-    }
-  };
-
-  if (loading) {
+  if (checkingOnboarding || authLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.content}>
