@@ -2,20 +2,25 @@ import React, { useRef, useEffect, useState } from 'react';
 import { StyleSheet, Platform, View, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { savePushToken } from '../lib/pushNotifications';
+import { savePushToken, registerForPushNotificationsAsync } from '../lib/pushNotifications';
 
 export default function WebViewScreen() {
   const webViewRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAndSendPushToken();
+    initializePushNotifications();
   }, []);
 
-  const checkAndSendPushToken = async () => {
-    const pendingToken = await AsyncStorage.getItem('pending_push_token');
-    if (pendingToken) {
-      console.log('Push token en attente:', pendingToken);
+  const initializePushNotifications = async () => {
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (token) {
+        await AsyncStorage.setItem('pending_push_token', token);
+        console.log('Push token obtenu:', token);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation des notifications:', error);
     }
   };
 
@@ -27,7 +32,6 @@ export default function WebViewScreen() {
       if (data.type === 'USER_LOGGED_IN' && data.userId) {
         console.log('Utilisateur connecté, ID:', data.userId);
 
-        // Récupérer le push token en attente
         const pendingToken = await AsyncStorage.getItem('pending_push_token');
 
         if (pendingToken) {
@@ -36,10 +40,8 @@ export default function WebViewScreen() {
 
           if (success) {
             console.log('Push token enregistré avec succès');
-            // Supprimer le token en attente
             await AsyncStorage.removeItem('pending_push_token');
 
-            // Notifier la WebView
             webViewRef.current?.postMessage(
               JSON.stringify({
                 type: 'PUSH_TOKEN_REGISTERED',
@@ -56,14 +58,9 @@ export default function WebViewScreen() {
 
   const injectedJavaScript = `
     (function() {
-      // Fonction pour envoyer des messages à React Native
       window.sendToNative = function(type, data) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type, ...data }));
       };
-
-      // Écouter les événements de connexion
-      // Votre site web devra appeler cette fonction après connexion :
-      // window.sendToNative('USER_LOGGED_IN', { userId: 'xxx' });
 
       console.log('Bridge React Native installé');
     })();
@@ -74,7 +71,7 @@ export default function WebViewScreen() {
     return (
       <View style={styles.container}>
         <iframe
-          src="https://repostme.com"
+          src="https://repostme.com/login"
           style={{
             width: '100%',
             height: '100%',
@@ -89,7 +86,7 @@ export default function WebViewScreen() {
     <View style={styles.container}>
       <WebView
         ref={webViewRef}
-        source={{ uri: 'https://repostme.com' }}
+        source={{ uri: 'https://repostme.com/login' }}
         style={styles.webview}
         onMessage={handleMessage}
         injectedJavaScript={injectedJavaScript}
