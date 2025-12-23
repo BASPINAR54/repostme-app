@@ -1,16 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExternalLink } from 'lucide-react-native';
 
 export default function Index() {
   const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      window.location.href = 'https://repostme.com/login';
-    }
-  }, []);
 
   return (
     <View style={styles.container}>
