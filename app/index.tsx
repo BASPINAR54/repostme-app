@@ -2,23 +2,35 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 
 export default function Index() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Petit délai pour s'assurer que le Root Layout est monté
     const timer = setTimeout(() => {
-      checkOnboarding();
+      checkAuthAndOnboarding();
     }, 100);
 
     return () => clearTimeout(timer);
   }, []);
 
-  const checkOnboarding = async () => {
+  const checkAuthAndOnboarding = async () => {
     try {
-      // Force toujours l'affichage de l'onboarding pour les tests
-      router.replace('/onboarding');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        router.replace('/notifications');
+        return;
+      }
+
+      const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+
+      if (onboardingCompleted === 'true') {
+        router.replace('/login');
+      } else {
+        router.replace('/onboarding');
+      }
     } catch (error) {
       console.error('Erreur lors de la vérification:', error);
       router.replace('/onboarding');

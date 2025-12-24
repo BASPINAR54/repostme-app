@@ -128,7 +128,7 @@ export default function NotificationsScreen() {
       case 'mission_completed':
         return 'https://repostme.com/sell?tab=mes-comptes';
       default:
-        return 'https://repostme.com/buy?tab=catalogue';
+        return 'https://repostme.com/sell';
     }
   };
 

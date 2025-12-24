@@ -21,9 +21,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -40,13 +39,10 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const { user } = isSignUp
-        ? await signUp(email, password)
-        : await signIn(email, password);
+      const { user } = await signIn(email, password);
 
       console.log('=== AUTH RÉUSSIE - DEMANDE DE PERMISSIONS ===');
 
-      // Demander les permissions push immédiatement après l'authentification
       try {
         const pushToken = await registerForPushNotificationsAsync();
         console.log('Push token obtenu:', pushToken);
@@ -57,19 +53,14 @@ export default function LoginScreen() {
         }
       } catch (permError) {
         console.error('Erreur permissions (non bloquant):', permError);
-        // Ne pas bloquer la connexion si les permissions échouent
       }
 
-      router.replace('/webview');
+      router.replace('/notifications');
     } catch (err: any) {
       console.error('Auth error:', err);
       setError(
         err.message === 'Invalid login credentials'
           ? 'Email ou mot de passe incorrect'
-          : isSignUp && err.message.includes('already registered')
-          ? 'Cet email est déjà utilisé'
-          : isSignUp
-          ? 'Erreur lors de la création du compte'
           : 'Erreur de connexion. Veuillez réessayer.'
       );
     } finally {
@@ -91,9 +82,7 @@ export default function LoginScreen() {
             <ShoppingBag size={48} color="#10b981" />
           </View>
           <Text style={styles.logoText}>RepostMe</Text>
-          <Text style={styles.subtitle}>
-            {isSignUp ? 'Créer un compte' : 'Espace Vendeur'}
-          </Text>
+          <Text style={styles.subtitle}>Espace Vendeur</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -144,33 +133,14 @@ export default function LoginScreen() {
             {loading ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.loginButtonText}>
-                {isSignUp ? 'Créer mon compte' : 'Se connecter'}
-              </Text>
+              <Text style={styles.loginButtonText}>Se connecter</Text>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => {
-              setIsSignUp(!isSignUp);
-              setError('');
-            }}
-            disabled={loading}
-          >
-            <Text style={styles.switchButtonText}>
-              {isSignUp
-                ? 'Déjà un compte ? Se connecter'
-                : 'Pas de compte ? S\'inscrire'}
-            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {isSignUp
-              ? 'Créez votre compte pour recevoir vos notifications de missions'
-              : 'Connectez-vous pour recevoir vos notifications de missions'}
+            Connectez-vous pour gérer vos missions et recevoir vos notifications
           </Text>
         </View>
       </ScrollView>
@@ -292,14 +262,5 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 20,
-  },
-  switchButton: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  switchButtonText: {
-    color: '#10b981',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

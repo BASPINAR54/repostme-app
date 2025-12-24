@@ -19,20 +19,20 @@ const slides = [
   {
     id: 1,
     icon: ShoppingBag,
-    title: 'Bienvenue sur RepostMe',
-    description: 'La plateforme qui connecte les vendeurs avec des reposteurs pour augmenter vos ventes.',
+    title: 'Bienvenue Vendeurs',
+    description: 'Gérez vos missions et développez vos ventes avec des reposteurs qualifiés.',
   },
   {
     id: 2,
     icon: Truck,
-    title: 'Recevez des missions',
-    description: 'Des reposteurs qualifiés prennent en charge vos produits et les partagent sur leurs réseaux.',
+    title: 'Missions en temps réel',
+    description: 'Suivez l\'avancement de vos produits confiés aux reposteurs directement depuis l\'app.',
   },
   {
     id: 3,
     icon: Bell,
-    title: 'Restez informé',
-    description: 'Activez les notifications pour être alerté instantanément de vos nouvelles missions et updates.',
+    title: 'Soyez notifié instantanément',
+    description: 'Recevez les notifications de nouvelles missions, validations et mises à jour importantes.',
   },
 ];
 
@@ -52,28 +52,6 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleSkip = async () => {
-    await AsyncStorage.setItem('onboarding_completed', 'true');
-    router.replace('/login');
-  };
-
-  const handleTestNotification = async () => {
-    try {
-      setLoading(true);
-      const token = await registerForPushNotificationsAsync();
-
-      if (token) {
-        await scheduleLocalNotification(
-          'Test de notification',
-          'Les notifications fonctionnent correctement!'
-        );
-      }
-    } catch (error) {
-      console.error('Erreur lors du test de notification:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEnableNotifications = async () => {
     try {
@@ -145,58 +123,24 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {currentSlide === 0 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipButtonText}>Passer</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>Suivant</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.testButton}
-              onPress={handleTestNotification}
-              disabled={loading}
-            >
-              <Bell size={18} color="#10b981" style={styles.buttonIcon} />
-              <Text style={styles.testButtonText}>
-                {loading ? 'Test...' : 'Tester'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : currentSlide < slides.length - 1 ? (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipButtonText}>Passer</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>Suivant</Text>
-            </TouchableOpacity>
-          </View>
+        {currentSlide < slides.length - 1 ? (
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={handleNext}
+          >
+            <Text style={styles.nextButtonText}>Suivant</Text>
+          </TouchableOpacity>
         ) : (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkip}
-              disabled={loading}
-            >
-              <Text style={styles.skipButtonText}>Plus tard</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.enableButton]}
-              onPress={handleEnableNotifications}
-              disabled={loading}
-            >
-              <Bell size={20} color="#ffffff" style={styles.buttonIcon} />
-              <Text style={styles.enableButtonText}>
-                {loading ? 'Activation...' : 'Activer'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.enableButton}
+            onPress={handleEnableNotifications}
+            disabled={loading}
+          >
+            <Bell size={20} color="#ffffff" style={styles.buttonIcon} />
+            <Text style={styles.enableButtonText}>
+              {loading ? 'Activation...' : 'Activer les notifications'}
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -258,25 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b981',
     width: 24,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  skipButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  skipButtonText: {
-    color: '#6b7280',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   nextButton: {
-    flex: 1,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -288,7 +214,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   enableButton: {
-    flex: 1,
     flexDirection: 'row',
     paddingVertical: 16,
     borderRadius: 12,
@@ -302,22 +227,6 @@ const styles = StyleSheet.create({
   enableButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  testButton: {
-    flex: 0.6,
-    flexDirection: 'row',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f0fdf4',
-    borderWidth: 1,
-    borderColor: '#10b981',
-  },
-  testButtonText: {
-    color: '#10b981',
-    fontSize: 14,
     fontWeight: '600',
   },
 });
