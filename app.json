@@ -1,27 +1,27 @@
 {
   "expo": {
     "name": "RepostMe",
-    "slug": "repostme",
+    "slug": "Repostme",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "Repostme",
     "userInterfaceStyle": "automatic",
 
-    // ✅ STABLE POUR iOS
     "jsEngine": "jsc",
     "newArchEnabled": true,
 
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.repostme.app",
+      "bundleIdentifier": "com.repostme.mobile.app",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": ["remote-notification"]
       }
     },
 
     "android": {
-      "package": "com.repostme.app",
+      "package": "com.repostme.mobile.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
@@ -57,6 +57,13 @@
 
     "experiments": {
       "typedRoutes": true
+    },
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "169f9db7-5b51-47c4-b8d8-64a6f82ab651"
+      }
     }
   }
 }
