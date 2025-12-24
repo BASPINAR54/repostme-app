@@ -21,12 +21,18 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
 
-  const handleLogin = async () => {
+  const handleAuth = async () => {
     if (!email || !password) {
       setError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
@@ -34,11 +40,13 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const { user } = await signIn(email, password);
+      const { user } = isSignUp
+        ? await signUp(email, password)
+        : await signIn(email, password);
 
-      console.log('=== LOGIN RÉUSSI - DEMANDE DE PERMISSIONS ===');
+      console.log('=== AUTH RÉUSSIE - DEMANDE DE PERMISSIONS ===');
 
-      // Demander les permissions push immédiatement après la connexion
+      // Demander les permissions push immédiatement après l'authentification
       try {
         const pushToken = await registerForPushNotificationsAsync();
         console.log('Push token obtenu:', pushToken);
@@ -52,12 +60,16 @@ export default function LoginScreen() {
         // Ne pas bloquer la connexion si les permissions échouent
       }
 
-      router.replace('/notifications');
+      router.replace('/webview');
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('Auth error:', err);
       setError(
         err.message === 'Invalid login credentials'
           ? 'Email ou mot de passe incorrect'
+          : isSignUp && err.message.includes('already registered')
+          ? 'Cet email est déjà utilisé'
+          : isSignUp
+          ? 'Erreur lors de la création du compte'
           : 'Erreur de connexion. Veuillez réessayer.'
       );
     } finally {
@@ -79,7 +91,9 @@ export default function LoginScreen() {
             <ShoppingBag size={48} color="#10b981" />
           </View>
           <Text style={styles.logoText}>RepostMe</Text>
-          <Text style={styles.subtitle}>Espace Vendeur</Text>
+          <Text style={styles.subtitle}>
+            {isSignUp ? 'Créer un compte' : 'Espace Vendeur'}
+          </Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -124,20 +138,39 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            onPress={handleAuth}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.loginButtonText}>Se connecter</Text>
+              <Text style={styles.loginButtonText}>
+                {isSignUp ? 'Créer mon compte' : 'Se connecter'}
+              </Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => {
+              setIsSignUp(!isSignUp);
+              setError('');
+            }}
+            disabled={loading}
+          >
+            <Text style={styles.switchButtonText}>
+              {isSignUp
+                ? 'Déjà un compte ? Se connecter'
+                : 'Pas de compte ? S\'inscrire'}
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Connectez-vous pour recevoir vos notifications de missions
+            {isSignUp
+              ? 'Créez votre compte pour recevoir vos notifications de missions'
+              : 'Connectez-vous pour recevoir vos notifications de missions'}
           </Text>
         </View>
       </ScrollView>
@@ -259,5 +292,14 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  switchButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  switchButtonText: {
+    color: '#10b981',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

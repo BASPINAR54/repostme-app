@@ -54,7 +54,7 @@ export default function OnboardingScreen() {
 
   const handleSkip = async () => {
     await AsyncStorage.setItem('onboarding_completed', 'true');
-    router.replace('/webview');
+    router.replace('/login');
   };
 
   const handleTestNotification = async () => {
@@ -90,13 +90,13 @@ export default function OnboardingScreen() {
       // Marquer l'onboarding comme terminé
       await AsyncStorage.setItem('onboarding_completed', 'true');
 
-      // Rediriger vers la WebView
-      router.replace('/webview');
+      // Rediriger vers le login
+      router.replace('/login');
     } catch (error) {
       console.error('Erreur lors de l\'activation des notifications:', error);
       // Continuer quand même
       await AsyncStorage.setItem('onboarding_completed', 'true');
-      router.replace('/webview');
+      router.replace('/login');
     } finally {
       setLoading(false);
     }

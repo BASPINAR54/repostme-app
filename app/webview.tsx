@@ -71,7 +71,7 @@ export default function WebViewScreen() {
     return (
       <View style={styles.container}>
         <iframe
-          src="https://repostme.com/login"
+          src="https://repostme.com/buy?tab=catalogue"
           style={{
             width: '100%',
             height: '100%',
@@ -86,7 +86,7 @@ export default function WebViewScreen() {
     <View style={styles.container}>
       <WebView
         ref={webViewRef}
-        source={{ uri: 'https://repostme.com/login' }}
+        source={{ uri: 'https://repostme.com/buy?tab=catalogue' }}
         style={styles.webview}
         onMessage={handleMessage}
         injectedJavaScript={injectedJavaScript}
