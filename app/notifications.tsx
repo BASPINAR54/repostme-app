@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { ShoppingBag, LogOut, Bell, BellRing } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -26,6 +27,8 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [webViewLoading, setWebViewLoading] = useState(true);
 
   const loadNotifications = async () => {
     if (!user) return;
@@ -235,19 +238,22 @@ export default function NotificationsScreen() {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <View style={styles.headerLeft}>
+      <TouchableOpacity
+        style={styles.headerLeft}
+        onPress={() => setShowNotifications(!showNotifications)}
+      >
         <View style={styles.logoContainer}>
           <ShoppingBag size={24} color="#10b981" />
         </View>
         <Text style={styles.headerTitle}>RepostMe</Text>
-      </View>
-
-      <View style={styles.headerRight}>
         {unreadCount > 0 && (
-          <View style={styles.badge}>
+          <View style={styles.headerBadge}>
             <Text style={styles.badgeText}>{unreadCount}</Text>
           </View>
         )}
+      </TouchableOpacity>
+
+      <View style={styles.headerRight}>
         <TouchableOpacity
           style={styles.testButton}
           onPress={handleRequestPermissions}
@@ -267,45 +273,59 @@ export default function NotificationsScreen() {
     </View>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        {renderHeader()}
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#10b981" />
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       {renderHeader()}
 
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <NotificationCard
-            notification={item}
-            onPress={handleNotificationPress}
+      {showNotifications ? (
+        loading ? (
+          <View style={styles.centerContent}>
+            <ActivityIndicator size="large" color="#10b981" />
+          </View>
+        ) : (
+          <FlatList
+            data={notifications}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <NotificationCard
+                notification={item}
+                onPress={handleNotificationPress}
+              />
+            )}
+            contentContainerStyle={
+              notifications.length === 0
+                ? styles.emptyContainer
+                : styles.listContent
+            }
+            ListEmptyComponent={<EmptyState />}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor="#10b981"
+                colors={['#10b981']}
+              />
+            }
           />
-        )}
-        contentContainerStyle={
-          notifications.length === 0
-            ? styles.emptyContainer
-            : styles.listContent
-        }
-        ListEmptyComponent={<EmptyState />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#10b981"
-            colors={['#10b981']}
+        )
+      ) : (
+        <>
+          <WebView
+            source={{ uri: 'https://repostme.com/buy?tab=catalogue' }}
+            style={styles.webview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            sharedCookiesEnabled={true}
+            onLoadStart={() => setWebViewLoading(true)}
+            onLoadEnd={() => setWebViewLoading(false)}
           />
-        }
-      />
+          {webViewLoading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#10b981" />
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -348,12 +368,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  badge: {
+  headerBadge: {
     backgroundColor: '#10b981',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    marginRight: 12,
+    marginLeft: 8,
     minWidth: 24,
     alignItems: 'center',
   },
@@ -379,5 +399,18 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flexGrow: 1,
+  },
+  webview: {
+    flex: 1,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
 });
