@@ -23,6 +23,14 @@
 
     "android": {
       "package": "com.repostme.mobile.app",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "com.google.android.c2dm.permission.RECEIVE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
