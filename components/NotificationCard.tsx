@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Bell, CheckCircle, AlertCircle } from 'lucide-react-native';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PlatformNotification } from '../types';
@@ -14,18 +13,6 @@ export function NotificationCard({
   notification,
   onPress,
 }: NotificationCardProps) {
-  const getIcon = () => {
-    switch (notification.type) {
-      case 'mission_completed':
-        return <CheckCircle size={24} color="#10b981" />;
-      case 'buyer_contested_order':
-      case 'mission_deadline_24h':
-        return <AlertCircle size={24} color="#ef4444" />;
-      default:
-        return <Bell size={24} color="#10b981" />;
-    }
-  };
-
   const getTimeAgo = () => {
     try {
       return formatDistanceToNow(new Date(notification.created_at), {
@@ -46,8 +33,6 @@ export function NotificationCard({
       onPress={() => onPress(notification)}
       activeOpacity={0.7}
     >
-      <View style={styles.iconContainer}>{getIcon()}</View>
-
       <View style={styles.contentContainer}>
         <View style={styles.headerRow}>
           <Text style={styles.title} numberOfLines={1}>
@@ -68,7 +53,6 @@ export function NotificationCard({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     backgroundColor: '#ffffff',
     padding: 16,
     marginHorizontal: 16,
@@ -85,10 +69,6 @@ const styles = StyleSheet.create({
   },
   unreadContainer: {
     backgroundColor: '#f0fdf4',
-  },
-  iconContainer: {
-    marginRight: 12,
-    justifyContent: 'center',
   },
   contentContainer: {
     flex: 1,
