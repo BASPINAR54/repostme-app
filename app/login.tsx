@@ -82,7 +82,7 @@ export default function LoginScreen() {
             <ShoppingBag size={48} color="#10b981" />
           </View>
           <Text style={styles.logoText}>RepostMe</Text>
-          <Text style={styles.subtitle}>Espace Vendeur</Text>
+        
         </View>
 
         <View style={styles.formContainer}>
