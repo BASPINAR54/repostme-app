@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { ShoppingBag, LogOut, Bell, BellRing } from 'lucide-react-native';
+import { ShoppingBag, LogOut } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { scheduleLocalNotification, registerForPushNotificationsAsync, savePushToken } from '../lib/pushNotifications';
@@ -254,18 +254,6 @@ export default function NotificationsScreen() {
       </TouchableOpacity>
 
       <View style={styles.headerRight}>
-        <TouchableOpacity
-          style={styles.testButton}
-          onPress={handleRequestPermissions}
-        >
-          <BellRing size={20} color="#ef4444" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.testButton}
-          onPress={handleTestNotification}
-        >
-          <Bell size={20} color="#10b981" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={20} color="#6b7280" />
         </TouchableOpacity>
