@@ -8,7 +8,7 @@
     "scheme": "Repostme",
     "userInterfaceStyle": "automatic",
 
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "newArchEnabled": true,
 
     "ios": {
