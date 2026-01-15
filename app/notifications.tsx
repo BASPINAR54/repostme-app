@@ -8,12 +8,12 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { ShoppingBag, LogOut } from 'lucide-react-native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
-import { scheduleLocalNotification, registerForPushNotificationsAsync, savePushToken } from '../lib/pushNotifications';
+import { scheduleLocalNotification } from '../lib/pushNotifications';
 import { NotificationCard } from '../components/NotificationCard';
 import { EmptyState } from '../components/EmptyState';
 import { PlatformNotification } from '../types';
@@ -27,8 +27,6 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [webViewLoading, setWebViewLoading] = useState(true);
 
   const loadNotifications = async () => {
     if (!user) return;
@@ -114,24 +112,18 @@ export default function NotificationsScreen() {
       }
     }
 
-    const actionUrl = notification.data?.action_url || getDefaultUrl(notification.type);
-    router.push(`/webview?url=${encodeURIComponent(actionUrl)}`);
-  };
+    try {
+      const url = 'https://repostme.com/sell';
+      const canOpen = await Linking.canOpenURL(url);
 
-  const getDefaultUrl = (type: string): string => {
-    switch (type) {
-      case 'proposal_received':
-        return 'https://repostme.com/sell?tab=offres';
-      case 'mission_accepted':
-        return 'https://repostme.com/sell?tab=missions';
-      case 'mission_deadline_24h':
-        return 'https://repostme.com/sell?tab=missions&status=active';
-      case 'buyer_contested_order':
-        return 'https://repostme.com/sell?tab=missions&status=contested';
-      case 'mission_completed':
-        return 'https://repostme.com/sell?tab=mes-comptes';
-      default:
-        return 'https://repostme.com/sell';
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Erreur', 'Impossible d\'ouvrir le lien');
+      }
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      Alert.alert('Erreur', 'Impossible d\'ouvrir le lien');
     }
   };
 
@@ -144,114 +136,19 @@ export default function NotificationsScreen() {
     }
   };
 
-  const handleRequestPermissions = async () => {
-    try {
-      console.log('=== DÉBUT DEMANDE PERMISSIONS ===');
-      const pushToken = await registerForPushNotificationsAsync();
-      console.log('Token reçu:', pushToken);
-
-      if (pushToken && user?.id) {
-        const saved = await savePushToken(user.id, pushToken);
-        console.log('Token enregistré:', saved);
-
-        Alert.alert(
-          'Permissions accordées!',
-          `Token enregistré: ${pushToken.substring(0, 30)}...`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        console.log('Pas de token ou pas d\'utilisateur');
-        Alert.alert(
-          'Erreur',
-          'Impossible d\'obtenir le token. Vérifiez les permissions dans Réglages → Notifications.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error: any) {
-      console.error('Erreur permissions:', error);
-      Alert.alert('Erreur', error.message || 'Erreur inconnue', [{ text: 'OK' }]);
-    }
-  };
-
-  const handleTestNotification = async () => {
-    if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté', [{ text: 'OK' }]);
-      return;
-    }
-
-    try {
-      console.log('=== DÉBUT TEST NOTIFICATION ===');
-      console.log('User ID:', user.id);
-
-      // Vérifier d'abord si l'utilisateur a des tokens
-      const { data: tokens, error: tokenError } = await supabase
-        .from('user_push_tokens')
-        .select('*')
-        .eq('user_id', user.id);
-
-      console.log('Tokens trouvés:', tokens);
-      console.log('Erreur tokens:', tokenError);
-
-      if (!tokens || tokens.length === 0) {
-        Alert.alert(
-          'Aucun token trouvé',
-          'Vous devez d\'abord autoriser les notifications. Cliquez sur l\'icône de cloche rouge pour activer les permissions.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      console.log('Appel de la fonction RPC...');
-      const { data, error } = await supabase.rpc('test_send_notification', {
-        p_user_id: user.id,
-        p_title: 'Test de notification',
-        p_message: 'Ceci est une notification de test! Si vous la recevez, tout fonctionne correctement.',
-      });
-
-      console.log('Résultat RPC:', data);
-      console.log('Erreur RPC:', error);
-
-      if (error) throw error;
-
-      if (data.success) {
-        Alert.alert(
-          'Notification envoyée!',
-          `Vérifiez votre appareil. ${tokens.length} appareil(s) notifié(s).\n\nLa notification devrait arriver dans quelques secondes.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert('Erreur', data.error || 'Impossible d\'envoyer la notification', [
-          { text: 'OK' },
-        ]);
-      }
-
-      console.log('=== FIN TEST NOTIFICATION ===');
-    } catch (error: any) {
-      console.error('Error sending test notification:', error);
-      Alert.alert(
-        'Erreur',
-        `Une erreur est survenue:\n${error.message || 'Erreur inconnue'}`,
-        [{ text: 'OK' }]
-      );
-    }
-  };
-
   const renderHeader = () => (
     <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.headerLeft}
-        onPress={() => setShowNotifications(!showNotifications)}
-      >
+      <View style={styles.headerLeft}>
         <View style={styles.logoContainer}>
           <ShoppingBag size={24} color="#10b981" />
         </View>
-        <Text style={styles.headerTitle}>RepostMe</Text>
+        <Text style={styles.headerTitle}>Notifications</Text>
         {unreadCount > 0 && (
           <View style={styles.headerBadge}>
             <Text style={styles.badgeText}>{unreadCount}</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </View>
 
       <View style={styles.headerRight}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -265,54 +162,35 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       {renderHeader()}
 
-      {showNotifications ? (
-        loading ? (
-          <View style={styles.centerContent}>
-            <ActivityIndicator size="large" color="#10b981" />
-          </View>
-        ) : (
-          <FlatList
-            data={notifications}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <NotificationCard
-                notification={item}
-                onPress={handleNotificationPress}
-              />
-            )}
-            contentContainerStyle={
-              notifications.length === 0
-                ? styles.emptyContainer
-                : styles.listContent
-            }
-            ListEmptyComponent={<EmptyState />}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={handleRefresh}
-                tintColor="#10b981"
-                colors={['#10b981']}
-              />
-            }
-          />
-        )
+      {loading ? (
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#10b981" />
+        </View>
       ) : (
-        <>
-          <WebView
-            source={{ uri: 'https://repostme.com/buy?tab=catalogue' }}
-            style={styles.webview}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            sharedCookiesEnabled={true}
-            onLoadStart={() => setWebViewLoading(true)}
-            onLoadEnd={() => setWebViewLoading(false)}
-          />
-          {webViewLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#10b981" />
-            </View>
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <NotificationCard
+              notification={item}
+              onPress={handleNotificationPress}
+            />
           )}
-        </>
+          contentContainerStyle={
+            notifications.length === 0
+              ? styles.emptyContainer
+              : styles.listContent
+          }
+          ListEmptyComponent={<EmptyState />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#10b981"
+              colors={['#10b981']}
+            />
+          }
+        />
       )}
     </View>
   );
@@ -370,10 +248,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  testButton: {
-    padding: 8,
-    marginRight: 4,
-  },
   logoutButton: {
     padding: 8,
   },
@@ -387,18 +261,5 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flexGrow: 1,
-  },
-  webview: {
-    flex: 1,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
 });

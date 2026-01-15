@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { ExternalLink } from 'lucide-react-native';
 import { PlatformNotification } from '../types';
 
 interface NotificationCardProps {
@@ -45,7 +46,13 @@ export function NotificationCard({
           {notification.message}
         </Text>
 
-        <Text style={styles.time}>{getTimeAgo()}</Text>
+        <View style={styles.footer}>
+          <Text style={styles.time}>{getTimeAgo()}</Text>
+          <View style={styles.actionButton}>
+            <ExternalLink size={14} color="#10b981" />
+            <Text style={styles.actionText}>Ouvrir</Text>
+          </View>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -87,12 +94,31 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 6,
+    marginBottom: 8,
     lineHeight: 20,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   time: {
     fontSize: 12,
     color: '#9ca3af',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#f0fdf4',
+    borderRadius: 8,
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10b981',
   },
   unreadDot: {
     width: 8,
